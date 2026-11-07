@@ -1,3 +1,4 @@
+import AppKit
 import SessionDockCore
 import SwiftUI
 
@@ -5,6 +6,9 @@ struct RootView: View {
     @Environment(AppEnvironment.self) private var app
     /// Every screen is laid out to fit this width, so that wide content never pushes the columns.
     static let detailMinWidth: CGFloat = 760
+    /// Fixed, so that a collapsed or restored sidebar always comes back at a usable width.
+    static let sidebarWidth: CGFloat = 220
+    @State private var columnVisibility = NavigationSplitViewVisibility.all
 
     var body: some View {
         Group {
@@ -26,7 +30,9 @@ struct RootView: View {
 
     private var shell: some View {
         @Bindable var app = app
-        return NavigationSplitView {
+        // The sidebar is the only navigation. The toggle still hides it on request, but macOS may also
+        // collapse it on its own while the window is being resized; that collapse is reverted at once.
+        return NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: Binding<AppRoute?>(
                 get: { app.route },
                 set: { if let route = $0 { app.route = route } }
@@ -44,7 +50,7 @@ struct RootView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+            .navigationSplitViewColumnWidth(min: Self.sidebarWidth, ideal: Self.sidebarWidth, max: Self.sidebarWidth)
         } detail: {
             VStack(spacing: 0) {
                 if let banner = app.banner {
@@ -55,6 +61,11 @@ struct RootView: View {
             }
             .animation(.snappy(duration: 0.2), value: app.banner)
             .navigationSplitViewColumnWidth(min: Self.detailMinWidth, ideal: 1000)
+        }
+        .onChange(of: columnVisibility) { _, visibility in
+            if visibility != .all, NSApp.windows.contains(where: \.inLiveResize) {
+                columnVisibility = .all
+            }
         }
     }
 

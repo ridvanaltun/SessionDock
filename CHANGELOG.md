@@ -13,6 +13,8 @@ Release notes are generated from this file. Add changes under **Unreleased**;
 
 ### Fixed
 - Wide content no longer pushes the sidebar or the columns out of place, at any window size.
+- The sidebar no longer disappears when the window is made smaller, and it always opens at full width. A sidebar
+  hidden once used to stay hidden or come back too narrow on the next launch.
 - The Dark and Light themes now apply to the whole window.
 - Saved preferences are kept when a later version adds or removes a setting.
 - The writer version reads "native-1" instead of "vnative-1".
