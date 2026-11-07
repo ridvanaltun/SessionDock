@@ -76,7 +76,7 @@ struct SettingsView: View {
                                 .textSelection(.enabled)
                         }
                     } icon: {
-                        AgentMark(agent: installation.agent)
+                        AgentMark(agent: installation.agent, size: 16)
                     }
                 }
             }

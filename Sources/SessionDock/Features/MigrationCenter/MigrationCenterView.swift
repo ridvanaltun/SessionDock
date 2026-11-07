@@ -98,7 +98,7 @@ struct MigrationCenterView: View {
 
     private func agentChip(_ agent: AgentKind, role: String) -> some View {
         HStack(spacing: 6) {
-            AgentMark(agent: agent)
+            AgentMark(agent: agent, size: 20)
             VStack(alignment: .leading, spacing: 0) {
                 Text(role)
                     .font(.caption2)

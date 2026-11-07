@@ -186,13 +186,11 @@ struct InfoRow: View {
 
 struct AgentMark: View {
     let agent: AgentKind
+    var size: CGFloat = 14
 
     var body: some View {
-        Image(systemName: agent.symbolName)
-            .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(agent == .claudeCode ? Color.orange : Color.indigo)
+        AgentLogo(agent: agent, size: size)
             .help(agent.displayName)
-            .accessibilityLabel(agent.displayName)
     }
 }
 

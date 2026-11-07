@@ -104,7 +104,7 @@ struct ContextManagerView: View {
                     ForEach(group.files) { file in
                         HStack(spacing: Theme.Spacing.s) {
                             Image(systemName: symbol(for: file.kind))
-                                .foregroundStyle(file.agent.map { $0 == .claudeCode ? Color.orange : Color.indigo } ?? Color.secondary)
+                                .foregroundStyle(file.agent?.accent ?? Color.secondary)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(file.displayName)
                                     .font(.callout)

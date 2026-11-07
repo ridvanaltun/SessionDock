@@ -14,13 +14,6 @@ public enum AgentKind: String, Codable, CaseIterable, Sendable, Identifiable, Ha
         case .openCode: "OpenCode"
         }
     }
-
-    public var symbolName: String {
-        switch self {
-        case .claudeCode: "terminal"
-        case .openCode: "chevron.left.forwardslash.chevron.right"
-        }
-    }
 }
 
 public enum InstallationStatus: Codable, Hashable, Sendable {

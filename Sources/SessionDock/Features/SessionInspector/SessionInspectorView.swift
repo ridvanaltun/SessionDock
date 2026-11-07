@@ -68,7 +68,7 @@ struct SessionInspectorView: View {
     private func header(_ session: SessionSummary) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.s) {
-                AgentMark(agent: session.agent)
+                AgentMark(agent: session.agent, size: 18)
                 Text(session.title)
                     .font(.title3.weight(.semibold))
                     .lineLimit(2)

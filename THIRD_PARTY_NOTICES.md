@@ -1,8 +1,18 @@
 # Third-party notices
 
+## Agent logos
+SessionDock shows the logos of the agents it reads, only to identify them. They are drawn from the
+owners' published artwork, unchanged in shape and colour. SessionDock is not affiliated with or
+endorsed by either owner.
+
+- Claude and the Claude logo are trademarks of Anthropic, PBC.
+- OpenCode and the OpenCode logo are trademarks of Anomaly. Source: https://opencode.ai/brand
+
+## Linked library
+
 SessionDock links the following library.
 
-## GRDB.swift
+### GRDB.swift
 - Use: SQLite access for the local index and for reading and writing OpenCode databases.
 - Licence: MIT
 - Project: https://github.com/groue/GRDB.swift

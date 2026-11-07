@@ -6,6 +6,7 @@ Release notes are generated from this file. Add changes under **Unreleased**;
 ## Unreleased
 
 ### Changed
+- Claude Code and OpenCode are shown with their own logos throughout the app, so each session's agent is clear at a glance.
 - The app icon follows the macOS 26 icon style and no longer shows a white frame.
 - Settings apply as soon as they change, in the standard macOS settings layout. A new agent location is scanned at once.
 - SessionDock reopens the section and session that were open last.

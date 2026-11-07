@@ -180,8 +180,7 @@ struct AgentCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
             HStack(spacing: Theme.Spacing.s) {
-                AgentMark(agent: installation.agent)
-                    .font(.title3)
+                AgentMark(agent: installation.agent, size: 22)
                 Text(installation.agent.displayName)
                     .font(.headline)
                 Spacer()
@@ -224,7 +223,7 @@ struct SessionRowContent: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.m) {
-            AgentMark(agent: session.agent)
+            AgentMark(agent: session.agent, size: 16)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: Theme.Spacing.s) {
                     if session.isSubagent {

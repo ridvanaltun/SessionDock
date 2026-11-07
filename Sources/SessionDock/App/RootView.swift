@@ -88,14 +88,20 @@ private struct AgentSidebarStatus: View {
     var body: some View {
         ForEach(app.installations, id: \.agent) { installation in
             HStack(spacing: Theme.Spacing.s) {
-                Circle()
-                    .fill(installation.status.isAvailable ? Theme.Tone.success.color : Theme.Tone.neutral.color)
-                    .frame(width: 7, height: 7)
+                AgentLogo(agent: installation.agent, size: 14)
+                    .opacity(installation.status.isAvailable ? 1 : 0.4)
                 Text(installation.agent.displayName)
+                    .foregroundStyle(installation.status.isAvailable ? .primary : .secondary)
                 Spacer()
-                Text("\(installation.sessionCount)")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                if installation.status.isAvailable {
+                    Text("\(installation.sessionCount)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(installation.status.label)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .font(.callout)
             .help(installation.detail)
