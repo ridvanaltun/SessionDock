@@ -5,6 +5,8 @@ Release notes are generated from this file. Add changes under **Unreleased**;
 
 ## Unreleased
 
+## 0.1.2 — 2026-11-07
+
 ### Changed
 - Claude Code and OpenCode are shown with their own logos throughout the app, so each session's agent is clear at a glance.
 - The app icon follows the macOS 26 icon style and no longer shows a white frame.
