@@ -11,10 +11,20 @@ public struct HostEnvironment: Sendable {
         self.variables = variables
     }
 
+    /// The real host, unless `SESSIONDOCK_HOME` points at another home. In that mode the data-location
+    /// variables are dropped too, so that nothing from the real machine is read. Used for demos,
+    /// screenshots and automated smoke tests.
     public static var current: HostEnvironment {
-        HostEnvironment(
-            homeDirectory: FileManager.default.homeDirectoryForCurrentUser,
-            variables: ProcessInfo.processInfo.environment
+        var variables = ProcessInfo.processInfo.environment
+        guard let override = variables["SESSIONDOCK_HOME"], !override.isEmpty else {
+            return HostEnvironment(homeDirectory: FileManager.default.homeDirectoryForCurrentUser, variables: variables)
+        }
+        for name in ["CLAUDE_CONFIG_DIR", "CLAUDE_CODE_HOME", "OPENCODE_DATA_HOME", "XDG_DATA_HOME", "XDG_CONFIG_HOME"] {
+            variables.removeValue(forKey: name)
+        }
+        return HostEnvironment(
+            homeDirectory: URL(fileURLWithPath: (override as NSString).expandingTildeInPath, isDirectory: true),
+            variables: variables
         )
     }
 

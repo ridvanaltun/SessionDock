@@ -26,4 +26,6 @@ It needs no other tool at runtime.
 ## Commands
 - Build: `swift build`
 - Test: `swift test`. Real-data tests: `SESSIONDOCK_REAL_TESTS=1 swift test --filter RealDataTests`
-- App bundle: `scripts/make-app-bundle.sh` → `build/SessionDock.app`
+- App bundle: `scripts/make-app-bundle.sh` → `build/SessionDock.app` (universal, plus zip and checksum)
+- Smoke test of the bundle on invented data: `scripts/smoke-test.sh`. Demo home: `scripts/demo-data.sh DIR`, then `SESSIONDOCK_HOME=DIR`.
+- Release: see `docs/RELEASING.md`. Never push or tag without the user's explicit go-ahead.

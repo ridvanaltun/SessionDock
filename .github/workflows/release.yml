@@ -1,0 +1,112 @@
+name: Release
+
+# Publishes SessionDock.app as a GitHub Release and updates the Homebrew cask.
+#   - Push a tag `vX.Y.Z` (use scripts/release.sh) → the CI workflow runs in full, then package and publish.
+#   - Run manually (workflow_dispatch) → same pipeline, published as a draft by default.
+# Builds are ad-hoc signed and not notarized until a Developer ID certificate is available. The release
+# notes and the cask say so.
+# This repository is its own Homebrew tap: each published, non-prerelease version commits its cask to
+# Casks/sessiondock.rb on main.
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: Create the release as a draft
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # The whole CI pipeline (build, tests, bundle, smoke test) first; nothing is published unless it passes.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          SOURCE_VERSION="$(sed -n 's/.*public static let current = "\(.*\)".*/\1/p' Sources/SessionDockCore/Core/Utilities/AppVersion.swift)"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            if [[ "$TAG_VERSION" != "$SOURCE_VERSION" ]]; then
+              echo "::error::Tag ${GITHUB_REF_NAME} does not match SessionDockVersion.current ($SOURCE_VERSION). Use scripts/release.sh."
+              exit 1
+            fi
+          fi
+          echo "version=$SOURCE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$SOURCE_VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$SOURCE_VERSION" == *-* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${{ inputs.draft }}" == "true" ]]; then echo "draft=true" >> "$GITHUB_OUTPUT"; else echo "draft=false" >> "$GITHUB_OUTPUT"; fi
+          echo "Releasing $SOURCE_VERSION"
+
+      - name: Build and package
+        run: scripts/make-app-bundle.sh dist
+
+      - name: Release notes and Homebrew cask
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: scripts/release-notes.sh "$VERSION" > dist/release-notes.md
+
+      - name: Publish GitHub Release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          DRAFT: ${{ steps.version.outputs.draft }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          ASSETS=("dist/SessionDock-$VERSION.zip" "dist/SessionDock-$VERSION.zip.sha256" "dist/sessiondock.rb")
+          FLAGS=(--title "SessionDock $VERSION" --notes-file dist/release-notes.md)
+          [[ "$PRERELEASE" == "true" ]] && FLAGS+=(--prerelease)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # Re-running, or publishing a draft made earlier by a manual run.
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+            gh release edit "$TAG" "${FLAGS[@]}" --draft="$DRAFT"
+          elif [[ "$DRAFT" == "true" ]]; then
+            gh release create "$TAG" "${ASSETS[@]}" "${FLAGS[@]}" --draft --target "$GITHUB_SHA"
+          else
+            gh release create "$TAG" "${ASSETS[@]}" "${FLAGS[@]}" --target "$GITHUB_SHA"
+          fi
+          echo "### SessionDock $VERSION $( [[ $DRAFT == true ]] && echo '(draft)' )" >> "$GITHUB_STEP_SUMMARY"
+          gh release view "$TAG" --json url --jq .url >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Update the Homebrew cask on main
+        if: steps.version.outputs.draft != 'true' && steps.version.outputs.prerelease != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # The checkout is the release tag; the cask goes onto the tip of main.
+          cp dist/sessiondock.rb "$RUNNER_TEMP/sessiondock.rb"
+          git fetch --quiet origin main
+          git checkout --quiet -B main origin/main
+          mkdir -p Casks
+          cp "$RUNNER_TEMP/sessiondock.rb" Casks/sessiondock.rb
+          if git diff --quiet -- Casks/sessiondock.rb; then
+            echo "Casks/sessiondock.rb is already at $VERSION."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -m "Homebrew cask for SessionDock $VERSION" -- Casks/sessiondock.rb
+          # A push with the workflow token doesn't start other workflows, so this commit doesn't run CI.
+          git push --quiet origin main
+          echo "Updated Casks/sessiondock.rb on main to $VERSION" >> "$GITHUB_STEP_SUMMARY"

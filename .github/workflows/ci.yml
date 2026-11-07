@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # The Release workflow runs this whole pipeline first and publishes only if it passes.
+  workflow_call:
+
+# Read-only token: CI never needs to write to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    # The "Release vX.Y.Z" commit that scripts/release.sh pushes to main is skipped here: its tag starts
+    # the Release workflow, which runs this pipeline itself.
+    if: >-
+      !(github.event_name == 'push' && github.ref == 'refs/heads/main'
+        && startsWith(github.event.head_commit.message, 'Release v'))
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+      - name: Bundle app (universal, ad-hoc signed)
+        run: scripts/make-app-bundle.sh
+      - name: Smoke test (the bundled app indexes the demo home)
+        run: scripts/smoke-test.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SessionDock-app
+          path: build/SessionDock-*.zip
+          retention-days: 7

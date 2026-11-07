@@ -1,10 +1,28 @@
 # SessionDock
 
+![SessionDock dashboard showing indexed Claude Code and OpenCode sessions](docs/assets/dashboard.png)
+
 **SessionDock** is a native macOS app for AI coding sessions. It finds your Claude Code and OpenCode
 sessions, lets you browse and search them, and moves Claude Code sessions into OpenCode safely.
 
 It is local-first. It has no account, no telemetry, and no network dependency. It reads your
 files and databases on your Mac and writes only when you confirm a migration.
+
+## Install
+
+With [Homebrew](https://brew.sh), using this repository as the tap:
+
+```bash
+brew tap ridvanaltun/sessiondock https://github.com/ridvanaltun/SessionDock
+brew install --cask ridvanaltun/sessiondock/sessiondock
+```
+
+Or download `SessionDock-<version>.zip` from [Releases](https://github.com/ridvanaltun/SessionDock/releases),
+unzip it, and move **SessionDock.app** to `/Applications`.
+
+Builds are ad-hoc signed and not yet notarized by Apple, so macOS blocks the first launch. Open
+**System Settings → Privacy & Security**, click **Open Anyway** once, or run
+`xattr -dr com.apple.quarantine /Applications/SessionDock.app`.
 
 ## Features
 
@@ -25,18 +43,25 @@ files and databases on your Mac and writes only when you confirm a migration.
 ## Requirements
 
 - macOS 14 or later
-- Xcode 16 or later (Swift 6 toolchain) to build from source
 - Claude Code and/or OpenCode, if you want to index their sessions
+- Xcode 16 or later (Swift 6 toolchain), only to build from source
 
 SessionDock does not need any other tool installed.
 
-## Build and run
+## Build from source
 
 ```sh
 swift build
 swift test
-scripts/make-app-bundle.sh      # creates build/SessionDock.app
+scripts/make-app-bundle.sh      # universal app bundle and zip in build/
 open build/SessionDock.app
+```
+
+To explore the app without your own sessions, point it at a generated demo home:
+
+```sh
+scripts/demo-data.sh /tmp/sessiondock-demo
+SESSIONDOCK_HOME=/tmp/sessiondock-demo build/SessionDock.app/Contents/MacOS/SessionDock
 ```
 
 ## How migration stays safe
@@ -54,8 +79,9 @@ open build/SessionDock.app
 Sources/SessionDockCore/   logic: models, index database, agents, migration, context
 Sources/SessionDock/       SwiftUI app: app shell, design system, feature screens
 Tests/SessionDockCoreTests fixtures and tests (real-data tests are opt-in)
-docs/                      architecture, data model, migration, development, decisions, status
-scripts/                   app bundle packaging
+packaging/homebrew/        Homebrew cask template used by the release workflow
+scripts/                   app bundle, demo data, smoke test, release tools
+docs/                      architecture, data model, migration, development, releasing, decisions, status
 ```
 
 ## Documentation
@@ -64,6 +90,7 @@ scripts/                   app bundle packaging
 - [Data model](docs/DATA_MODEL.md)
 - [Migration](docs/MIGRATION.md)
 - [Development](docs/DEVELOPMENT.md)
+- [Releasing](docs/RELEASING.md)
 - [Decisions](docs/DECISIONS.md)
 - [Project status](docs/PROJECT_STATUS.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
