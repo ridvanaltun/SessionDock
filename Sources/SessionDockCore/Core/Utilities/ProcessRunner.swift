@@ -48,31 +48,48 @@ public enum ProcessRunner {
 
                 let stdoutBox = OutputBox(limit: outputLimit)
                 let stderrBox = OutputBox(limit: outputLimit)
-                stdoutPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                    let data = fileHandle.availableData
-                    if data.isEmpty { fileHandle.readabilityHandler = nil } else { stdoutBox.append(data) }
-                }
-                stderrPipe.fileHandleForReading.readabilityHandler = { fileHandle in
-                    let data = fileHandle.availableData
-                    if data.isEmpty { fileHandle.readabilityHandler = nil } else { stderrBox.append(data) }
-                }
-
-                process.terminationHandler = { finished in
+                // The result is delivered once the process has exited and both pipes reached end of file.
+                // A grandchild that inherited the pipes can keep them open after the process exits, so
+                // the wait for end of file is bounded by a grace period.
+                let completion = Completion { status in
                     stdoutPipe.fileHandleForReading.readabilityHandler = nil
                     stderrPipe.fileHandleForReading.readabilityHandler = nil
-                    stdoutBox.append(stdoutPipe.fileHandleForReading.readDataToEndOfFile())
-                    stderrBox.append(stderrPipe.fileHandleForReading.readDataToEndOfFile())
                     handle.cancelTimer()
                     let out = stdoutBox.snapshot()
                     let err = stderrBox.snapshot()
                     continuation.resume(returning: ProcessResult(
-                        exitCode: finished.terminationStatus,
+                        exitCode: status,
                         stdout: out.text,
                         stderr: err.text,
                         timedOut: handle.didTimeOut,
                         truncated: out.truncated || err.truncated,
                         duration: clock.now - started
                     ))
+                }
+                stdoutPipe.fileHandleForReading.readabilityHandler = { fileHandle in
+                    let data = fileHandle.availableData
+                    if data.isEmpty {
+                        fileHandle.readabilityHandler = nil
+                        completion.streamClosed()
+                    } else {
+                        stdoutBox.append(data)
+                    }
+                }
+                stderrPipe.fileHandleForReading.readabilityHandler = { fileHandle in
+                    let data = fileHandle.availableData
+                    if data.isEmpty {
+                        fileHandle.readabilityHandler = nil
+                        completion.streamClosed()
+                    } else {
+                        stderrBox.append(data)
+                    }
+                }
+
+                process.terminationHandler = { finished in
+                    completion.exited(status: finished.terminationStatus)
+                    DispatchQueue.global().asyncAfter(deadline: .now() + .seconds(2)) {
+                        completion.forceFinish()
+                    }
                 }
 
                 handle.process = process
@@ -130,6 +147,41 @@ private final class ProcessHandle: @unchecked Sendable {
     func terminate() {
         let running = lock.withLock { _process }
         if let running, running.isRunning { running.terminate() }
+    }
+}
+
+private final class Completion: @unchecked Sendable {
+    private let lock = NSLock()
+    private var status: Int32?
+    private var openStreams = 2
+    private var finished = false
+    private let deliver: @Sendable (Int32) -> Void
+
+    init(deliver: @escaping @Sendable (Int32) -> Void) {
+        self.deliver = deliver
+    }
+
+    func streamClosed() {
+        update { openStreams -= 1 }
+    }
+
+    func exited(status: Int32) {
+        update { self.status = status }
+    }
+
+    /// Delivers the result after the grace period even if a pipe is still held open.
+    func forceFinish() {
+        update { openStreams = 0 }
+    }
+
+    private func update(_ change: () -> Void) {
+        let ready = lock.withLock { () -> Int32? in
+            change()
+            guard !finished, let status, openStreams <= 0 else { return nil }
+            finished = true
+            return status
+        }
+        if let ready { deliver(ready) }
     }
 }
 

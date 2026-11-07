@@ -239,7 +239,7 @@ public struct IndexRepository: Sendable {
         try database.writer.read { db in
             let total = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM session") ?? 0
             let subagents = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM session WHERE isSubagent = 1") ?? 0
-            let projects = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM project") ?? 0
+            let projects = try Int.fetchOne(db, sql: "SELECT COUNT(DISTINCT projectId) FROM session") ?? 0
             var byAgent: [AgentKind: Int] = [:]
             for row in try Row.fetchAll(db, sql: "SELECT agent, COUNT(*) AS n FROM session GROUP BY agent") {
                 if let agent = AgentKind(rawValue: row["agent"]) { byAgent[agent] = row["n"] }

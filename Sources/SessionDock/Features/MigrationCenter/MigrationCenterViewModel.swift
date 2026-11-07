@@ -62,18 +62,25 @@ final class MigrationCenterViewModel {
             destinationStatus = openCode?.status ?? .notFound
             claudeRoot = installations.first { $0.agent == .claudeCode }?.rootPath
             openCodeRunning = await OpenCodeProcessDetector.runningProcesses()
-            if let destinationPath {
-                writerStatus = try await services.engine.writerStatus(destination: URL(fileURLWithPath: destinationPath))
-            } else {
-                writerStatus = nil
-            }
             let sessions = try services.index.sessions(SessionQuery(agent: .claudeCode, sort: .title, limit: 100_000))
             let projects = try services.index.projects(agent: .claudeCode)
             groups = Self.groups(sessions: sessions, projects: projects)
-            if let destinationPath, destinationStatus.isAvailable {
-                copiesInOpenCode = Set(try OpenCodeStore(databaseURL: URL(fileURLWithPath: destinationPath)).originMap().map(\.originId))
-            } else {
+            // An unreadable destination must not hide the source list or the history.
+            do {
+                if let destinationPath {
+                    writerStatus = try await services.engine.writerStatus(destination: URL(fileURLWithPath: destinationPath))
+                } else {
+                    writerStatus = nil
+                }
+                if let destinationPath, destinationStatus.isAvailable {
+                    copiesInOpenCode = Set(try OpenCodeStore(databaseURL: URL(fileURLWithPath: destinationPath)).originMap().map(\.originId))
+                } else {
+                    copiesInOpenCode = []
+                }
+            } catch {
+                writerStatus = nil
                 copiesInOpenCode = []
+                errorMessage = "The OpenCode database could not be read: \(error.localizedDescription)"
             }
             jobs = try services.migrations.jobs(limit: 100)
             backups = try services.migrations.backups(limit: 100)
@@ -173,6 +180,8 @@ final class MigrationCenterViewModel {
         guard let destinationPath, !selectedIds.isEmpty else { return }
         phase = .planning
         errorMessage = nil
+        report = nil
+        plan = nil
         do {
             verification = try await services.engine.verifyExisting(
                 selection: MigrationSelection(selectedSessionIds: Array(selectedIds)),

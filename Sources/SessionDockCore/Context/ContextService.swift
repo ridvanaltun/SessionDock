@@ -156,15 +156,34 @@ public struct ContextService: Sendable {
         let url = URL(fileURLWithPath: file.path)
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
-        let data = try handle.read(upToCount: maxBytes) ?? Data()
+        var data = try handle.read(upToCount: maxBytes) ?? Data()
+        let truncated = Int64(data.count) >= Int64(maxBytes) && file.sizeBytes > Int64(maxBytes)
+        if truncated {
+            // The cut can land inside a multi-byte character. Drop the incomplete sequence.
+            data = Self.trimmingIncompleteUTF8(data)
+        }
         guard let text = String(data: data, encoding: .utf8) else {
             return ContextPreview(text: "", truncated: false, isReadable: false)
         }
-        let truncated = Int64(data.count) >= Int64(maxBytes) && file.sizeBytes > Int64(maxBytes)
         if file.kind == .settings || file.kind == .configuration {
             return ContextPreview(text: Self.redactedOutline(text), truncated: truncated, isReadable: true)
         }
         return ContextPreview(text: text, truncated: truncated, isReadable: true)
+    }
+
+    static func trimmingIncompleteUTF8(_ data: Data) -> Data {
+        let bytes = [UInt8](data)
+        var index = bytes.count - 1
+        var continuation = 0
+        while index >= 0, continuation < 3, bytes[index] & 0xC0 == 0x80 {
+            continuation += 1
+            index -= 1
+        }
+        guard index >= 0 else { return data }
+        let lead = bytes[index]
+        let expected = lead & 0x80 == 0 ? 1 : lead & 0xE0 == 0xC0 ? 2 : lead & 0xF0 == 0xE0 ? 3 : lead & 0xF8 == 0xF0 ? 4 : 0
+        if expected == continuation + 1 { return data }
+        return expected == 0 ? data : data.prefix(index)
     }
 
     /// Settings and config files can hold credentials, so their values are never shown. The preview

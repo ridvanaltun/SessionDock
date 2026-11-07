@@ -55,8 +55,9 @@ struct SettingsView: View {
                         }
                         .disabled(!model.isDirty)
                         Button("Save") {
-                            app.savePreferences(model.draft)
-                            model.setBaseline(model.draft)
+                            if app.savePreferences(model.draft) {
+                                model.setBaseline(model.draft)
+                            }
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(!model.isDirty)
@@ -186,12 +187,8 @@ struct SettingsView: View {
                 ForEach(ThemePreference.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
-            Picker("Log level", selection: $model.draft.logLevel) {
-                ForEach(LogLevelPreference.allCases) { Text($0.rawValue.capitalized).tag($0) }
-            }
-            .frame(width: 260)
             Toggle("Show subagents in the session list", isOn: $model.draft.showSubagentsInExplorer)
-            Text("Logs go to the macOS unified log under dev.sessiondock. They never contain conversation text.")
+            Text("Logs go to the macOS unified log under dev.sessiondock. They never contain conversation text. Use Console to choose which levels are shown.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

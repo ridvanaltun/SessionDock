@@ -33,6 +33,20 @@ public struct MigrationRepository: Sendable {
         }
     }
 
+    public func jobCount() throws -> Int {
+        try database.writer.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM migration_job") ?? 0
+        }
+    }
+
+    /// Number of recorded backups and their combined size, without a row limit.
+    public func backupTotals() throws -> (count: Int, sizeBytes: Int64) {
+        try database.writer.read { db in
+            let row = try Row.fetchOne(db, sql: "SELECT COUNT(*) AS n, COALESCE(SUM(sizeBytes), 0) AS size FROM backup_record")
+            return ((row?["n"] as Int?) ?? 0, (row?["size"] as Int64?) ?? 0)
+        }
+    }
+
     public func jobs(limit: Int = 50) throws -> [MigrationJob] {
         try database.writer.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM migration_job ORDER BY createdAt DESC LIMIT ?", arguments: [limit])

@@ -16,6 +16,8 @@ public enum ReadOnlyDatabase {
         do {
             return try DatabaseQueue(path: url.path, configuration: readOnly)
         } catch let error as DatabaseError where error.resultCode == .SQLITE_CANTOPEN {
+            // A read-write open would create a missing file, so only fall back for files that exist.
+            guard FileManager.default.fileExists(atPath: url.path) else { throw error }
             var queryOnly = Configuration()
             queryOnly.label = "query-only:\(url.lastPathComponent)"
             queryOnly.busyMode = .timeout(5)

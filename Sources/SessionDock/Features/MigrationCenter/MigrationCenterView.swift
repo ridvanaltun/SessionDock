@@ -54,7 +54,10 @@ struct MigrationCenterView: View {
         ) {
             Button("Back up and migrate") {
                 guard let services = app.services else { return }
-                Task { await model.execute(services) }
+                Task {
+                    await model.execute(services)
+                    await app.refresh()
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -71,6 +74,7 @@ struct MigrationCenterView: View {
                 Task {
                     if let job = await model.restore(backupId: backup.id, services) {
                         app.show(job.summary, tone: .success)
+                        await app.refresh()
                     }
                 }
             }
@@ -300,7 +304,7 @@ struct MigrationCenterView: View {
 
             if !plan.issues.isEmpty {
                 VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                    ForEach(plan.issues) { issue in
+                    ForEach(Array(plan.issues.enumerated()), id: \.offset) { _, issue in
                         Label {
                             Text(issue.message)
                                 .font(.callout)

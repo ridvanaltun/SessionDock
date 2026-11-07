@@ -143,6 +143,37 @@ final class MigrationEngineTests: XCTestCase {
         XCTAssertEqual(try harness.migrations.mappings(jobId: report.job.id).count, 2, "rows decoded")
     }
 
+    func testVerificationCountsSessionsWrittenByTheRunAsNew() async throws {
+        let harness = try await makeHarness()
+        let plan = try await harness.engine.plan(
+            selection: selection([Fixtures.mainSessionId]),
+            sourceRoot: harness.claudeRoot.path,
+            destination: harness.destination
+        )
+        let report = try await harness.engine.execute(plan: plan, destination: harness.destination, backupRoot: harness.backupRoot.url)
+        let check = try XCTUnwrap(report.validations.first { $0.check == "sessions.noUnexpected" })
+        XCTAssertTrue(check.passed, check.detail)
+        XCTAssertTrue(check.detail.hasPrefix("2 new session(s)"), "the ids before the write must not include the written sessions: \(check.detail)")
+    }
+
+    func testVerifyExistingSubagentFindsParentOutsideTheSelection() async throws {
+        let harness = try await makeHarness()
+        let plan = try await harness.engine.plan(
+            selection: selection([Fixtures.mainSessionId]),
+            sourceRoot: harness.claudeRoot.path,
+            destination: harness.destination
+        )
+        _ = try await harness.engine.execute(plan: plan, destination: harness.destination, backupRoot: harness.backupRoot.url)
+
+        let results = try await harness.engine.verifyExisting(
+            selection: selection([Fixtures.subagentId]),
+            destination: harness.destination
+        )
+        let link = try XCTUnwrap(results.first { $0.check == "subagents.parentLink" })
+        XCTAssertTrue(link.passed, link.detail)
+        XCTAssertTrue(link.detail.hasPrefix("1 subagent(s)"), link.detail)
+    }
+
     func testStalePlanIsRefusedWhenDestinationChanges() async throws {
         let harness = try await makeHarness()
         let plan = try await harness.engine.plan(

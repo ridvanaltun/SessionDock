@@ -167,14 +167,17 @@ final class AppEnvironment {
         preferences = (try? services.preferences.load()) ?? AppPreferences()
     }
 
-    func savePreferences(_ updated: AppPreferences) {
-        guard let services else { return }
+    @discardableResult
+    func savePreferences(_ updated: AppPreferences) -> Bool {
+        guard let services else { return false }
         do {
             try services.preferences.save(updated)
             preferences = updated
             startAutoScan()
+            return true
         } catch {
             banner = Banner(tone: .error, message: "Preferences could not be saved: \(error.localizedDescription)")
+            return false
         }
     }
 

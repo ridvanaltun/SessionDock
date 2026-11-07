@@ -47,7 +47,10 @@ final class SessionExplorerViewModel {
 
     var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
 
-    func attach(_ services: AppServices) async {
+    func attach(_ services: AppServices, preferences: AppPreferences) async {
+        if self.services == nil {
+            showSubagents = preferences.showSubagentsInExplorer
+        }
         self.services = services
         await loadCopies()
         await reload()
@@ -79,7 +82,7 @@ final class SessionExplorerViewModel {
                 sort: sort,
                 limit: 5_000
             ))
-            totalMatches = matches.count
+            totalMatches = showSubagents ? matches.count : matches.filter { !$0.isSubagent }.count
             projectNames = Dictionary(
                 try services.index.projects().map { ($0.id, $0.name) },
                 uniquingKeysWith: { first, _ in first }
@@ -162,9 +165,11 @@ struct SessionExplorerView: View {
         .searchable(text: $model.query, placement: .toolbar, prompt: "Search titles, projects and text")
         .task(id: app.indexRevision) {
             guard let services = app.services else { return }
-            await model.attach(services)
+            await model.attach(services, preferences: app.preferences)
         }
         .onChange(of: app.explorerProjectId) { _, value in
+            // Clearing the request below triggers this handler again with nil, which must not clear the filter.
+            guard let value else { return }
             model.projectFilter = value
             app.explorerProjectId = nil
         }

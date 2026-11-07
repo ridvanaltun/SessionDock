@@ -26,6 +26,37 @@ final class BackupManagerTests: XCTestCase {
         withExtendedLifetime(queue) {}
     }
 
+    func testReadOnlyOpenOfAClosedWALDatabaseLeavesItUnchanged() throws {
+        let dir = try TempDirectory()
+        let live = dir.file("live.db")
+        var configuration = Configuration()
+        configuration.prepareDatabase { db in try db.execute(sql: "PRAGMA journal_mode = WAL") }
+        let writer = try DatabaseQueue(path: live.path, configuration: configuration)
+        try writer.write { db in
+            try db.execute(sql: "CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)")
+            try db.execute(sql: "INSERT INTO notes (body) VALUES ('kept')")
+        }
+        try writer.close()
+        // The last writer has closed and its -shm is gone, which forces the query-only fallback.
+        try? FileManager.default.removeItem(atPath: live.path + "-shm")
+        let before = try Data(contentsOf: live)
+
+        let reader = try ReadOnlyDatabase.open(at: live)
+        let bodies = try reader.read { db in try String.fetchAll(db, sql: "SELECT body FROM notes") }
+        XCTAssertEqual(bodies, ["kept"])
+        XCTAssertThrowsError(try reader.writeWithoutTransaction { db in try db.execute(sql: "DELETE FROM notes") })
+        try reader.close()
+
+        XCTAssertEqual(try Data(contentsOf: live), before)
+    }
+
+    func testReadOnlyOpenNeverCreatesAMissingDatabase() throws {
+        let dir = try TempDirectory()
+        let missing = dir.file("missing.db")
+        XCTAssertThrowsError(try ReadOnlyDatabase.open(at: missing))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: missing.path))
+    }
+
     func testRestoreReplacesLiveContentFromBackup() throws {
         let dir = try TempDirectory()
         let live = dir.file("live.db")
@@ -141,6 +172,25 @@ final class AdapterAndProcessTests: XCTestCase {
         )
         XCTAssertTrue(result.timedOut)
         XCTAssertNotEqual(result.exitCode, 0)
+    }
+
+    func testProcessRunnerReturnsWhenABackgroundChildKeepsThePipeOpen() async throws {
+        let started = ContinuousClock.now
+        let result = try await ProcessRunner.run(
+            executable: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "echo ready; /bin/sleep 20 & exit 0"],
+            timeout: .seconds(5)
+        )
+        XCTAssertEqual(result.exitCode, 0)
+        XCTAssertEqual(result.stdout, "ready\n")
+        XCTAssertLessThan(ContinuousClock.now - started, .seconds(10))
+    }
+
+    func testContextPreviewDropsACharacterCutByTheByteLimit() {
+        let text = Data("abç".utf8)
+        XCTAssertEqual(ContextService.trimmingIncompleteUTF8(text.prefix(3)), Data("ab".utf8))
+        XCTAssertEqual(ContextService.trimmingIncompleteUTF8(text), text)
+        XCTAssertEqual(ContextService.trimmingIncompleteUTF8(Data("ab".utf8)), Data("ab".utf8))
     }
 
     func testProcessRunnerCancellationStopsTheChild() async throws {

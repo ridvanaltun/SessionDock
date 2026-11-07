@@ -51,11 +51,13 @@ public struct OpenCodeStore: Sendable {
                     SELECT \(select(["id", "project_id", "parent_id", "title", "directory", "time_created", "time_updated",
                                      "metadata", "model", "agent", "time_archived", "slug", "version", "workspace_id"],
                                     table: "session_v2", profile: profile)),
+                           \(profile.hasV2Messages ? """
                            (SELECT COUNT(*) FROM session_message m
                              WHERE m.session_id = s.id AND m.type IN ('user', 'assistant', 'system', 'synthetic')) AS message_count,
                            (SELECT COUNT(*) FROM session_message m, json_each(m.data, '$.content') j
                              WHERE m.session_id = s.id AND m.type = 'assistant'
                                AND json_extract(j.value, '$.type') = 'tool') AS tool_count
+                           """ : "0 AS message_count, 0 AS tool_count")
                     FROM session_v2 s
                     """)
                 for row in v2 {
@@ -70,9 +72,12 @@ public struct OpenCodeStore: Sendable {
                     SELECT \(select(["id", "project_id", "parent_id", "title", "directory", "time_created", "time_updated",
                                      "metadata", "agent", "model", "slug", "version", "workspace_id"],
                                     table: "session", profile: profile)),
-                           (SELECT COUNT(*) FROM message m WHERE m.session_id = s.id) AS message_count,
-                           (SELECT COUNT(*) FROM part p WHERE p.session_id = s.id
-                             AND json_extract(p.data, '$.type') = 'tool') AS tool_count
+                           \(profile.has(table: "message")
+                               ? "(SELECT COUNT(*) FROM message m WHERE m.session_id = s.id)"
+                               : "0") AS message_count,
+                           \(profile.has(table: "part")
+                               ? "(SELECT COUNT(*) FROM part p WHERE p.session_id = s.id AND json_extract(p.data, '$.type') = 'tool')"
+                               : "0") AS tool_count
                     FROM session s
                     """)
                 for row in legacy {

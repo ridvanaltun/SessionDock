@@ -170,7 +170,7 @@ struct SessionInspectorView: View {
             Label("\(model.issues.count) record(s) could not be decoded", systemImage: "exclamationmark.triangle")
                 .font(.callout.weight(.medium))
                 .foregroundStyle(Theme.Tone.warning.color)
-            ForEach(model.issues.prefix(3)) { issue in
+            ForEach(Array(model.issues.prefix(3).enumerated()), id: \.offset) { _, issue in
                 Text(issue.rawPreview ?? issue.detail)
                     .font(Theme.mono(11))
                     .foregroundStyle(.secondary)

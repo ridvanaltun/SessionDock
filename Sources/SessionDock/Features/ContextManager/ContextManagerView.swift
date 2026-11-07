@@ -100,7 +100,7 @@ struct ContextManagerView: View {
 
     private var fileList: some View {
         List(selection: $model.selectedPath) {
-            ForEach(groups, id: \.title) { group in
+            ForEach(groups, id: \.id) { group in
                 Section(group.title) {
                     ForEach(group.files) { file in
                         HStack(spacing: Theme.Spacing.s) {
@@ -130,6 +130,8 @@ struct ContextManagerView: View {
     }
 
     private struct Group {
+        /// Project folders can share a name, so sections are keyed by full path.
+        var id: String
         var title: String
         var files: [ContextFile]
     }
@@ -137,14 +139,15 @@ struct ContextManagerView: View {
     private var groups: [Group] {
         var result: [Group] = []
         let global = model.files.filter { $0.projectPath == nil && $0.kind != .memory }
-        if !global.isEmpty { result.append(Group(title: "Global", files: global)) }
+        if !global.isEmpty { result.append(Group(id: "global", title: "Global", files: global)) }
         let memory = model.files.filter { $0.kind == .memory }
-        if !memory.isEmpty { result.append(Group(title: "Memory", files: memory)) }
+        if !memory.isEmpty { result.append(Group(id: "memory", title: "Memory", files: memory)) }
         let projectPaths = Set(model.files.compactMap(\.projectPath).filter { path in
             model.files.contains { $0.projectPath == path && $0.kind != .memory }
         }).sorted()
         for path in projectPaths {
             result.append(Group(
+                id: "project:\(path)",
                 title: URL(fileURLWithPath: path).lastPathComponent,
                 files: model.files.filter { $0.projectPath == path && $0.kind != .memory }
             ))

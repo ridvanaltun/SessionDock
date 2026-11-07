@@ -8,7 +8,9 @@ final class DashboardViewModel {
     var counts = IndexCounts.empty
     var recentSessions: [SessionSummary] = []
     var recentJobs: [MigrationJob] = []
-    var backups: [BackupRecord] = []
+    var jobCount = 0
+    var backupCount = 0
+    var totalBackupBytes: Int64 = 0
     var projectCount = 0
     var loadError: String?
 
@@ -18,7 +20,8 @@ final class DashboardViewModel {
             counts = try services.index.counts()
             recentSessions = try services.index.sessions(SessionQuery(sort: .recentActivity, limit: 8))
             recentJobs = try services.migrations.jobs(limit: 5)
-            backups = try services.migrations.backups(limit: 50)
+            jobCount = try services.migrations.jobCount()
+            (backupCount, totalBackupBytes) = try services.migrations.backupTotals()
             projectCount = try services.index.projects().count
             loadError = nil
         } catch {
@@ -28,7 +31,6 @@ final class DashboardViewModel {
 
     var lastJob: MigrationJob? { recentJobs.first }
     var failedRecently: Int { recentJobs.filter { $0.status == .failed || $0.status == .failedVerification }.count }
-    var totalBackupBytes: Int64 { backups.reduce(0) { $0 + $1.sizeBytes } }
 }
 
 struct DashboardView: View {
@@ -45,9 +47,9 @@ struct DashboardView: View {
                                detail: "\(model.counts.mainSessions) main · \(model.counts.subagents) subagents")
                     MetricCard(title: "Projects", value: "\(model.projectCount)", symbol: "folder",
                                detail: "Grouped by working directory")
-                    MetricCard(title: "Migrations", value: "\(model.recentJobs.count)", symbol: "arrow.triangle.swap",
+                    MetricCard(title: "Migrations", value: "\(model.jobCount)", symbol: "arrow.triangle.swap",
                                detail: model.lastJob.map { "Last: \($0.status.label.lowercased())" } ?? "None yet")
-                    MetricCard(title: "Backups", value: "\(model.backups.count)", symbol: "externaldrive.badge.timemachine",
+                    MetricCard(title: "Backups", value: "\(model.backupCount)", symbol: "externaldrive.badge.timemachine",
                                detail: ByteFormat.string(model.totalBackupBytes))
                 }
                 .padding(.horizontal, Theme.Spacing.xl)

@@ -137,6 +137,7 @@ public struct MigrationValidator: Sendable {
             parentChecked += 1
             let parentOrigin = Self.originId(fromCompositeId: parentSource)
             let parentOpenCodeId = openCodeIdByOrigin[parentOrigin]
+                ?? (legacyByOrigin[parentOrigin] ?? v2ByOrigin[parentOrigin])?.openCodeSessionId
             let storedParent = legacyByOrigin[session.originId]?.parentOpenCodeSessionId
                 ?? v2ByOrigin[session.originId]?.parentOpenCodeSessionId
             if parentOpenCodeId == nil || storedParent != parentOpenCodeId {

@@ -98,12 +98,11 @@ public struct OpenCodeAdapter: AgentAdapter {
     }
 
     private static func cliVersion(environment: HostEnvironment) async -> String? {
-        let pathDirectories = (environment.variables["PATH"] ?? "").split(separator: ":").map(String.init)
-            + [environment.homeDirectory.appending(path: ".opencode/bin").path]
-        guard let executable = pathDirectories
-            .map({ URL(fileURLWithPath: $0).appending(path: "opencode") })
-            .first(where: { FileManager.default.isExecutableFile(atPath: $0.path) })
-        else { return nil }
+        guard let executable = ExecutableLocator.find(
+            "opencode",
+            environment: environment,
+            extraDirectories: [environment.homeDirectory.appending(path: ".opencode/bin").path]
+        ) else { return nil }
         guard let result = try? await ProcessRunner.run(
             executable: executable,
             arguments: ["--version"],

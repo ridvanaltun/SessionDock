@@ -309,6 +309,7 @@ public actor MigrationEngine {
         let inputs = try await buildInputs(for: plan.sessionsToMigrate, alreadyMigrated: plan.alreadyMigrated)
         let existingProjects = try store.projectIds()
         let rows = OpenCodeLegacyWriter.rows(for: inputs, existingProjectIds: existingProjects)
+        let sessionIdsBeforeWrite = try store.sessionIDs(profile: profile)
         do {
             try OpenCodeLegacyWriter.apply(rows, to: destination)
             job.operation = "Wrote \(rows.counts.sessions) session(s), \(rows.counts.messages) message(s), \(rows.counts.parts) part(s), \(rows.counts.projects) new project(s)."
@@ -331,8 +332,11 @@ public actor MigrationEngine {
         let expectations = MigrationValidator.Expectations(
             planned: plan.sessionsToMigrate,
             alreadyMigrated: plan.alreadyMigrated,
-            preExistingSessionIds: try store.sessionIDs(profile: profile),
-            preExistingMessageCounts: Dictionary(uniqueKeysWithValues: plan.alreadyMigrated.map { ($0.targetSessionId, $0.targetMessageCount) }),
+            preExistingSessionIds: sessionIdsBeforeWrite,
+            preExistingMessageCounts: Dictionary(
+                plan.alreadyMigrated.map { ($0.targetSessionId, $0.targetMessageCount) },
+                uniquingKeysWith: { first, _ in first }
+            ),
             sourceFingerprintsBefore: plan.sourceFingerprints,
             openCodeVisibleIds: visible
         )
