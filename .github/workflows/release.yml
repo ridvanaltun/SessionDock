@@ -101,12 +101,14 @@ jobs:
           git checkout --quiet -B main origin/main
           mkdir -p Casks
           cp "$RUNNER_TEMP/sessiondock.rb" Casks/sessiondock.rb
-          if git diff --quiet -- Casks/sessiondock.rb; then
+          # Stage first: a plain diff ignores the file while it is still untracked (the first release).
+          git add Casks/sessiondock.rb
+          if git diff --cached --quiet -- Casks/sessiondock.rb; then
             echo "Casks/sessiondock.rb is already at $VERSION."
             exit 0
           fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit --quiet -m "Homebrew cask for SessionDock $VERSION" -- Casks/sessiondock.rb
+            commit --quiet -m "Homebrew cask for SessionDock $VERSION"
           # A push with the workflow token doesn't start other workflows, so this commit doesn't run CI.
           git push --quiet origin main
           echo "Updated Casks/sessiondock.rb on main to $VERSION" >> "$GITHUB_STEP_SUMMARY"
