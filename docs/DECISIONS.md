@@ -89,6 +89,9 @@ write, job or backup.
 Duplicate detection uses the origin id stored in metadata. A transcript that has grown after its copy was written is
 reported as stale, and the copy is left alone.
 
+## D-24 · Licence: MIT (2026-11-07)
+The project is released under the MIT licence, with the copyright holder Rıdvan Altun.
+
 ## D-23 · Attribution (2026-11-07)
 The project and its documentation do not name external tools or projects it learned from. The notice file lists only
 linked libraries.

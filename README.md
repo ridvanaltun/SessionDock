@@ -70,4 +70,4 @@ scripts/                   app bundle packaging
 
 ## Licence
 
-No licence has been chosen yet.
+MIT. See [LICENSE](LICENSE).

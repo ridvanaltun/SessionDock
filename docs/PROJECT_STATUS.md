@@ -36,7 +36,7 @@ Last updated: 2026-11-07.
 - Accessibility pass. VoiceOver labels are partial.
 - Logo: candidates are in `design/logo-options/`, awaiting approval.
 - Developer ID signing and notarisation. The bundle is ad-hoc signed.
-- Licence choice.
+- Logo selection (see `design/logo-options/`).
 
 ## Tests
 `swift test`: 64 tests, 0 failures. Five opt-in real-data tests are skipped by default. Real-data and rehearsal tests pass when enabled.
