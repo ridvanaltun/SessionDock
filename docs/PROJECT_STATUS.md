@@ -34,11 +34,8 @@ Last updated: 2026-11-07.
 ## Phase 6 remaining
 - Interrupted-write tests (kill mid-transaction).
 - Accessibility pass. VoiceOver labels are partial.
-- Logo: candidates are in `design/logo-options/`, awaiting approval.
 - Developer ID signing and notarisation. The bundle is ad-hoc signed.
-- Logo selection (see `design/logo-options/`). Once approved, add `Resources/AppIcon.icns`.
-- First GitHub run of CI and Release. The workflows were checked locally (universal bundle, smoke test,
-  release notes, cask) but have not run on GitHub yet. Nothing has been pushed.
+- App icon: the chosen logo is in `design/logo/`. Convert it to `Resources/AppIcon.icns` to ship it in the bundle.
 
 ## Tests
 `swift test`: 64 tests, 0 failures. Five opt-in real-data tests are skipped by default. Real-data and rehearsal tests pass when enabled.

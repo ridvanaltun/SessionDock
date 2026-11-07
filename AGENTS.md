@@ -11,7 +11,7 @@ It needs no other tool at runtime.
 - `Sources/SessionDockCore/`: all logic, no UI. `Core/` (models, database, utilities), `Agents/` (per-agent discovery and reading), `Migration/` (plan, engine, writer, backup, validation), `Context/`.
 - `Sources/SessionDock/`: SwiftUI app. `App/`, `DesignSystem/`, `Features/<Feature>/` (view and view model together).
 - `Tests/SessionDockCoreTests/`: XCTest. Real-data tests are opt-in (see docs/DEVELOPMENT.md).
-- `docs/`: keep current. `design/`: logo candidates, not used until approved.
+- `docs/`: keep current. `design/logo/`: the chosen logo source (SVG and PNG). Not in the bundle until `Resources/AppIcon.icns` exists.
 
 ## Rules
 1. Never write to Claude Code transcripts. Write to the OpenCode database only in `MigrationEngine.execute`, after a verified backup, in one transaction.
