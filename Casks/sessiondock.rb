@@ -1,6 +1,6 @@
 cask "sessiondock" do
-  version "0.1.1"
-  sha256 "f1b0725f9b6ee87b0466469ab2b66ef954245374a017b3956cd4d772538b66ff"
+  version "0.1.2"
+  sha256 "f5aef28e0125f0135e35afb74ab1ddfa05e4153c38d6f2e079f42e803348e31f"
 
   url "https://github.com/ridvanaltun/SessionDock/releases/download/v#{version}/SessionDock-#{version}.zip"
   name "SessionDock"
