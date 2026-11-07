@@ -42,7 +42,7 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 ScreenHeader("Dashboard", subtitle: "Your coding agents, sessions and migrations on this Mac.")
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Theme.Spacing.m), count: 4), spacing: Theme.Spacing.m) {
                     MetricCard(title: "Sessions", value: "\(model.counts.sessions)", symbol: "bubble.left.and.bubble.right",
                                detail: "\(model.counts.mainSessions) main · \(model.counts.subagents) subagents")
                     MetricCard(title: "Projects", value: "\(model.projectCount)", symbol: "folder",
