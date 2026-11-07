@@ -21,7 +21,7 @@ struct MigrationCenterView: View {
             }
             HStack(alignment: .top, spacing: 0) {
                 sourcePicker
-                    .frame(width: 400)
+                    .frame(width: 340)
                 Divider()
                 VStack(spacing: 0) {
                     Picker("Panel", selection: $panel) {
@@ -249,7 +249,7 @@ struct MigrationCenterView: View {
             }
             if let status = model.writerStatus {
                 HStack(spacing: Theme.Spacing.s) {
-                    StatusBadge(text: "Built-in writer v\(status.writerVersion)", tone: status.isReady ? .success : .error)
+                    StatusBadge(text: "Built-in writer \(status.writerVersion)", tone: status.isReady ? .success : .error)
                     StatusBadge(text: status.isReady ? "Schema ready" : "Schema not supported", tone: status.isReady ? .success : .error)
                 }
                 Text(status.detail)
@@ -556,7 +556,7 @@ struct MigrationCenterView: View {
                     SectionTitle("Run details")
                     Text(job.summary).font(.callout)
                     InfoRow(label: "Operation", value: job.operation.isEmpty ? "—" : job.operation)
-                    InfoRow(label: "Writer", value: job.writerVersion.map { "v\($0)" } ?? "—")
+                    InfoRow(label: "Writer", value: job.writerVersion ?? "—")
                     if !job.stderrExcerpt.isEmpty {
                         DisclosureGroup("Error details") {
                             Text(job.stderrExcerpt).font(Theme.mono(11)).textSelection(.enabled)

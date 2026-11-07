@@ -54,7 +54,10 @@ Only CLAUDE.md and AGENTS.md can be copied. The copy shows its destination, requ
 keeps the previous file as a timestamped backup.
 
 ## D-13 · Preferences in SQLite
-One JSON document in the local database. Only the theme is also read through `@AppStorage`.
+One JSON document in the local database. Missing keys keep their defaults and unknown keys are ignored, so a
+version can add or remove a setting without discarding the others. The theme is applied through `NSApp.appearance`,
+which reaches every window, the sidebar material and sheets. Only UI state (the last section and session) lives in
+`UserDefaults`.
 
 ## D-14 · Phase gating
 A phase is complete only when its acceptance evidence exists and the tests pass. See docs/PROJECT_STATUS.md.

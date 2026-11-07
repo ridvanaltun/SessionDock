@@ -77,11 +77,10 @@ struct ContextManagerView: View {
                     message: "SessionDock looks for CLAUDE.md, AGENTS.md, memory and rule files in ~/.claude, ~/.config/opencode and your projects."
                 )
             } else {
-                HSplitView {
+                MasterDetail {
                     fileList
-                        .frame(minWidth: 300, idealWidth: 340, maxWidth: 420)
+                } detail: {
                     previewPane
-                        .frame(minWidth: 460, maxWidth: .infinity)
                 }
             }
         }

@@ -43,6 +43,9 @@ To notarize later, add a Developer ID Application certificate and pass its ident
 an app-specific password as repository secrets, and a step that submits the zip with `notarytool`.
 
 ## App icon
-The logo source is `design/logo/sessiondock-icon.png` (1024×1024, with its SVG beside it). `scripts/make-icon.sh`
-turns it into `Resources/AppIcon.icns`; run it after changing the logo and commit the result.
-`scripts/make-app-bundle.sh` copies the icon into the bundle and sets `CFBundleIconFile`.
+The icon source is `design/logo/AppIcon.icon`, an Icon Composer document: `icon.json` and the glyph in
+`Assets/glyph.svg`, without a background or frame, because macOS draws the shape. `scripts/make-icon.sh` compiles it
+with Xcode's `actool` into `Resources/Assets.car` (macOS 26 and later) and `Resources/AppIcon.icns` (earlier
+versions), and writes `design/logo/preview.png`. Run it after changing the icon and commit the results; the CI does
+not need Xcode for this. `scripts/make-app-bundle.sh` copies both files and sets `CFBundleIconName` and
+`CFBundleIconFile`.

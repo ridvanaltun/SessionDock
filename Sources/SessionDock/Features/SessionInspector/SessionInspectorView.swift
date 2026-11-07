@@ -360,7 +360,7 @@ struct CodeBlock: View {
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Theme.Spacing.s)
-                .background(RoundedRectangle(cornerRadius: Theme.Radius.small).fill(Color.black.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: Theme.Radius.small).fill(Theme.surfaceStrong))
             if text.count > limit {
                 Button(showAll ? "Show less" : "Show all \(text.count.formatted()) characters") {
                     showAll.toggle()

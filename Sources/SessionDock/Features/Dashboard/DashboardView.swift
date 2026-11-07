@@ -42,7 +42,7 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 ScreenHeader("Dashboard", subtitle: "Your coding agents, sessions and migrations on this Mac.")
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
                     MetricCard(title: "Sessions", value: "\(model.counts.sessions)", symbol: "bubble.left.and.bubble.right",
                                detail: "\(model.counts.mainSessions) main · \(model.counts.subagents) subagents")
                     MetricCard(title: "Projects", value: "\(model.projectCount)", symbol: "folder",
@@ -56,11 +56,13 @@ struct DashboardView: View {
 
                 SectionTitle("Agents")
                     .padding(.horizontal, Theme.Spacing.xl)
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: Theme.Spacing.m)], spacing: Theme.Spacing.m) {
+                // Equal heights: every card stretches to the tallest one in the row.
+                HStack(alignment: .top, spacing: Theme.Spacing.m) {
                     ForEach(model.installations, id: \.agent) { installation in
                         AgentCard(installation: installation)
                     }
                 }
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, Theme.Spacing.xl)
 
                 HStack(alignment: .top, spacing: Theme.Spacing.l) {
@@ -69,7 +71,7 @@ struct DashboardView: View {
                         migrationHealth
                         recentMigrations
                     }
-                    .frame(width: 380)
+                    .frame(width: 320)
                 }
                 .padding(.horizontal, Theme.Spacing.xl)
                 .padding(.bottom, Theme.Spacing.xxl)
@@ -210,6 +212,7 @@ struct AgentCard: View {
                     .foregroundStyle(Theme.Tone.error.color)
             }
         }
+        .frame(maxHeight: .infinity, alignment: .topLeading)
         .card()
     }
 }

@@ -104,4 +104,13 @@ final class IndexRepositoryTests: XCTestCase {
         try store.save(prefs)
         XCTAssertEqual(try store.load(), prefs)
     }
+
+    func testPreferencesKeepSavedValuesWhenKeysAreMissingOrUnknown() throws {
+        let json = #"{"theme":"dark","scanIntervalMinutes":15,"logLevel":"debug"}"#
+        let decoded = try JSONDecoder().decode(AppPreferences.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.theme, .dark)
+        XCTAssertEqual(decoded.scanIntervalMinutes, 15)
+        XCTAssertEqual(decoded.backupRetentionCount, AppPreferences().backupRetentionCount)
+        XCTAssertTrue(decoded.showSubagentsInExplorer)
+    }
 }

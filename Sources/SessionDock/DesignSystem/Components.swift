@@ -32,6 +32,25 @@ struct ScreenHeader<Trailing: View>: View {
     }
 }
 
+/// A list column and a flexible detail column. The list keeps a fixed width so that the layout never
+/// exceeds the window, whatever the content of either side.
+struct MasterDetail<Master: View, Detail: View>: View {
+    var masterWidth: CGFloat = 320
+    @ViewBuilder var master: () -> Master
+    @ViewBuilder var detail: () -> Detail
+
+    var body: some View {
+        HStack(spacing: 0) {
+            master()
+                .frame(width: masterWidth)
+                .frame(maxHeight: .infinity)
+            Divider()
+            detail()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
 struct SectionTitle: View {
     let text: String
 
@@ -57,6 +76,8 @@ struct StatusBadge: View {
                 Image(systemName: symbol)
             }
             Text(text)
+                .lineLimit(1)
+                .truncationMode(.middle)
         }
         .font(.caption.weight(.medium))
         .padding(.horizontal, 7)

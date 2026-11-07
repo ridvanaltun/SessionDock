@@ -3,6 +3,8 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppEnvironment.self) private var app
+    /// Every screen is laid out to fit this width, so that wide content never pushes the columns.
+    static let detailMinWidth: CGFloat = 760
 
     var body: some View {
         Group {
@@ -38,21 +40,21 @@ struct RootView: View {
                 }
                 Section("Agents") {
                     AgentSidebarStatus()
+                    RefreshStatus()
                 }
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-            .safeAreaInset(edge: .bottom) {
-                RefreshFooter()
-            }
         } detail: {
             VStack(spacing: 0) {
                 if let banner = app.banner {
                     BannerView(banner: banner) { app.banner = nil }
                 }
                 detail(for: app.route)
+                    .frame(minWidth: Self.detailMinWidth, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .animation(.snappy(duration: 0.2), value: app.banner)
+            .navigationSplitViewColumnWidth(min: Self.detailMinWidth, ideal: 1000)
         }
     }
 
@@ -90,34 +92,33 @@ private struct AgentSidebarStatus: View {
     }
 }
 
-private struct RefreshFooter: View {
+/// Index state and the refresh action, as the last row of the Agents section.
+private struct RefreshStatus: View {
     @Environment(AppEnvironment.self) private var app
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+        HStack(spacing: Theme.Spacing.s) {
             if app.isRefreshing {
-                let fraction = app.refreshProgress.values.map(\.fraction)
-                ProgressView(value: fraction.isEmpty ? 0 : fraction.reduce(0, +) / Double(fraction.count))
-                    .controlSize(.small)
-                Text("Indexing sessions…")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else if let last = app.lastRefresh {
-                Text("Indexed \(last.formatted(.relative(presentation: .named)))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                ProgressView()
+                    .controlSize(.mini)
+                Text("Indexing…")
+            } else {
+                Text(app.lastRefresh.map { "Indexed \($0.formatted(.relative(presentation: .named)))" } ?? "Not indexed yet")
             }
+            Spacer()
             Button {
                 Task { await app.refresh() }
             } label: {
-                Label("Refresh", systemImage: "arrow.clockwise")
+                Image(systemName: "arrow.clockwise")
             }
+            .buttonStyle(.borderless)
             .disabled(app.isRefreshing)
-            .controlSize(.small)
+            .help("Refresh the index (⌘R)")
+            .accessibilityLabel("Refresh")
         }
-        .padding(Theme.Spacing.m)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.bar)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .padding(.top, Theme.Spacing.xs)
     }
 }
 

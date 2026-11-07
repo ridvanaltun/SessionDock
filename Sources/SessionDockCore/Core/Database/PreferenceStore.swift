@@ -17,15 +17,6 @@ public enum ThemePreference: String, Codable, CaseIterable, Sendable, Identifiab
     }
 }
 
-public enum LogLevelPreference: String, Codable, CaseIterable, Sendable, Identifiable {
-    case error
-    case warning
-    case info
-    case debug
-
-    public var id: String { rawValue }
-}
-
 public struct AppPreferences: Codable, Hashable, Sendable {
     public var theme: ThemePreference = .system
     public var autoScanEnabled: Bool = true
@@ -33,11 +24,31 @@ public struct AppPreferences: Codable, Hashable, Sendable {
     /// Custom backup folder. `nil` means `~/Library/Application Support/SessionDock/Backups`.
     public var backupDirectory: String?
     public var backupRetentionCount: Int = 10
-    public var logLevel: LogLevelPreference = .info
     public var showSubagentsInExplorer: Bool = true
     public var pathOverrides = PathOverrides()
 
     public init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case theme, autoScanEnabled, scanIntervalMinutes, backupDirectory, backupRetentionCount
+        case showSubagentsInExplorer, pathOverrides
+    }
+
+    /// Missing or unreadable keys keep their defaults, so that adding a preference in a later version
+    /// does not discard the ones a user already saved.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        func value<T: Decodable>(_ key: CodingKeys, _ fallback: T) -> T {
+            ((try? container.decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
+        }
+        theme = value(.theme, theme)
+        autoScanEnabled = value(.autoScanEnabled, autoScanEnabled)
+        scanIntervalMinutes = value(.scanIntervalMinutes, scanIntervalMinutes)
+        backupDirectory = value(.backupDirectory, backupDirectory)
+        backupRetentionCount = value(.backupRetentionCount, backupRetentionCount)
+        showSubagentsInExplorer = value(.showSubagentsInExplorer, showSubagentsInExplorer)
+        pathOverrides = value(.pathOverrides, pathOverrides)
+    }
 }
 
 /// Application preferences, stored as one JSON document in the local index database.

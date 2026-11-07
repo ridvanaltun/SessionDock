@@ -152,14 +152,15 @@ struct SessionExplorerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScreenHeader("Sessions", subtitle: subtitle) {
-                filters
-            }
-            HSplitView {
+            ScreenHeader("Sessions", subtitle: subtitle)
+            filters
+                .padding(.horizontal, Theme.Spacing.xl)
+                .padding(.bottom, Theme.Spacing.m)
+            Divider()
+            MasterDetail {
                 list
-                    .frame(minWidth: 380, idealWidth: 430, maxWidth: 560)
+            } detail: {
                 inspector
-                    .frame(minWidth: 480, maxWidth: .infinity)
             }
         }
         .searchable(text: $model.query, placement: .toolbar, prompt: "Search titles, projects and text")
@@ -189,7 +190,7 @@ struct SessionExplorerView: View {
     }
 
     private var filters: some View {
-        HStack(spacing: Theme.Spacing.s) {
+        HStack(spacing: Theme.Spacing.m) {
             Picker("Agent", selection: $model.agentFilter) {
                 Text("All agents").tag(AgentKind?.none)
                 ForEach(AgentKind.allCases) { agent in
@@ -197,17 +198,21 @@ struct SessionExplorerView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .frame(width: 260)
+            .labelsHidden()
+            .fixedSize()
 
             Picker("Sort", selection: $model.sort) {
                 ForEach(SessionSort.allCases) { sort in
                     Text(sort.label).tag(sort)
                 }
             }
-            .frame(width: 170)
+            .fixedSize()
 
             Toggle("Subagents", isOn: $model.showSubagents)
                 .toggleStyle(.checkbox)
+                .fixedSize()
+
+            Spacer(minLength: 0)
 
             if let projectFilter = model.projectFilter {
                 Button {
@@ -215,6 +220,8 @@ struct SessionExplorerView: View {
                 } label: {
                     Label(model.projectNames[projectFilter] ?? "Project", systemImage: "xmark.circle.fill")
                         .labelStyle(.titleAndIcon)
+                        .lineLimit(1)
+                        .frame(maxWidth: 220)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

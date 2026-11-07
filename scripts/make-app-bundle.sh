@@ -31,6 +31,11 @@ if [[ -f "$ROOT/Resources/AppIcon.icns" ]]; then
   cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
   /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "$APP/Contents/Info.plist"
 fi
+# macOS 26 and later read the icon from the asset catalog, older versions from AppIcon.icns.
+if [[ -f "$ROOT/Resources/Assets.car" ]]; then
+  cp "$ROOT/Resources/Assets.car" "$APP/Contents/Resources/Assets.car"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string AppIcon" "$APP/Contents/Info.plist"
+fi
 
 echo "▸ Signing ($SIGN_IDENTITY)"
 if [[ "$SIGN_IDENTITY" == "-" ]]; then

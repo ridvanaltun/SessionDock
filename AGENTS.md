@@ -11,7 +11,7 @@ It needs no other tool at runtime.
 - `Sources/SessionDockCore/`: all logic, no UI. `Core/` (models, database, utilities), `Agents/` (per-agent discovery and reading), `Migration/` (plan, engine, writer, backup, validation), `Context/`.
 - `Sources/SessionDock/`: SwiftUI app. `App/`, `DesignSystem/`, `Features/<Feature>/` (view and view model together).
 - `Tests/SessionDockCoreTests/`: XCTest. Real-data tests are opt-in (see docs/DEVELOPMENT.md).
-- `docs/`: keep current. `design/logo/`: the logo source (SVG and PNG). `scripts/make-icon.sh` builds `Resources/AppIcon.icns` from it.
+- `docs/`: keep current. `design/logo/AppIcon.icon`: the icon source. `scripts/make-icon.sh` compiles it into `Resources/`.
 
 ## Rules
 1. Never write to Claude Code transcripts. Write to the OpenCode database only in `MigrationEngine.execute`, after a verified backup, in one transaction.

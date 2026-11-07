@@ -1,20 +1,26 @@
 #!/bin/zsh
-# Builds Resources/AppIcon.icns from the chosen logo (design/logo/sessiondock-icon.png, 1024×1024).
-# Run it again whenever the logo changes, and commit the result.
+# Compiles the app icon from design/logo/AppIcon.icon (an Icon Composer document) into
+# Resources/Assets.car (macOS 26 and later, which mask and render the icon themselves) and
+# Resources/AppIcon.icns (earlier macOS versions). Needs Xcode 26 or later for actool.
+# Run it again whenever the logo changes, and commit the results.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SOURCE="design/logo/sessiondock-icon.png"
-OUTPUT="Resources/AppIcon.icns"
-ICONSET="$(mktemp -d)/AppIcon.iconset"
-mkdir -p "$ICONSET"
+SOURCE="$PWD/design/logo/AppIcon.icon"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
 
-for size in 16 32 128 256 512; do
-  sips -z $size $size "$SOURCE" --out "$ICONSET/icon_${size}x${size}.png" > /dev/null
-  double=$((size * 2))
-  sips -z $double $double "$SOURCE" --out "$ICONSET/icon_${size}x${size}@2x.png" > /dev/null
-done
+xcrun actool "$SOURCE" \
+  --compile "$WORK" \
+  --platform macosx \
+  --minimum-deployment-target 14.0 \
+  --app-icon AppIcon \
+  --output-partial-info-plist "$WORK/partial.plist" > /dev/null
 
-iconutil -c icns "$ICONSET" -o "$OUTPUT"
-rm -rf "$(dirname "$ICONSET")"
-echo "✓ $OUTPUT"
+cp "$WORK/Assets.car" Resources/Assets.car
+cp "$WORK/AppIcon.icns" Resources/AppIcon.icns
+
+# A flat preview of the rendered icon, for documents and reviews.
+iconutil -c iconset Resources/AppIcon.icns -o "$WORK/AppIcon.iconset"
+cp "$WORK/AppIcon.iconset/icon_128x128@2x.png" design/logo/preview.png
+echo "✓ Resources/Assets.car, Resources/AppIcon.icns and design/logo/preview.png"

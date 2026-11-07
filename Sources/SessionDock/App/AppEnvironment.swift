@@ -1,3 +1,4 @@
+import AppKit
 import Observation
 import SessionDockCore
 import SwiftUI
@@ -71,10 +72,18 @@ final class AppEnvironment {
 
     private(set) var startup: Startup = .loading
     private(set) var services: AppServices?
-    var route: AppRoute = .dashboard
+    /// The visible section. Remembered between launches; `-lastRoute <section>` opens a given section.
+    var route: AppRoute = AppRoute(rawValue: UserDefaults.standard.string(forKey: AppEnvironment.routeKey) ?? "") ?? .dashboard {
+        didSet { UserDefaults.standard.set(route.rawValue, forKey: Self.routeKey) }
+    }
+    private static let routeKey = "lastRoute"
 
     /// Session selected in the explorer, so that dashboard and migration screens can link to it.
-    var selectedSessionId: String?
+    /// Remembered between launches.
+    var selectedSessionId: String? = UserDefaults.standard.string(forKey: AppEnvironment.sessionKey) {
+        didSet { UserDefaults.standard.set(selectedSessionId, forKey: Self.sessionKey) }
+    }
+    private static let sessionKey = "lastSessionId"
     /// Project to filter the explorer by, set when navigating from Projects.
     var explorerProjectId: String?
 
@@ -133,6 +142,7 @@ final class AppEnvironment {
             )
             self.services = services
             self.preferences = try preferenceStore.load()
+            applyAppearance()
             startup = .ready
             await refresh()
             startAutoScan()
@@ -162,18 +172,22 @@ final class AppEnvironment {
         }
     }
 
-    func reloadPreferences() {
-        guard let services else { return }
-        preferences = (try? services.preferences.load()) ?? AppPreferences()
-    }
-
+    /// Saves and applies preferences at once. A new location triggers a rescan, so that the change is
+    /// visible without a separate step.
     @discardableResult
     func savePreferences(_ updated: AppPreferences) -> Bool {
-        guard let services else { return false }
+        guard let services, updated != preferences else { return true }
+        let previous = preferences
         do {
             try services.preferences.save(updated)
             preferences = updated
-            startAutoScan()
+            if updated.theme != previous.theme { applyAppearance() }
+            if updated.autoScanEnabled != previous.autoScanEnabled || updated.scanIntervalMinutes != previous.scanIntervalMinutes {
+                startAutoScan()
+            }
+            if updated.pathOverrides != previous.pathOverrides {
+                Task { await refresh() }
+            }
             return true
         } catch {
             banner = Banner(tone: .error, message: "Preferences could not be saved: \(error.localizedDescription)")
@@ -193,6 +207,16 @@ final class AppEnvironment {
     func openProject(_ id: String) {
         explorerProjectId = id
         route = .sessions
+    }
+
+    /// Sets the appearance on the application, which reliably reaches every window, the sidebar
+    /// material and sheets. `nil` follows the system.
+    private func applyAppearance() {
+        switch preferences.theme {
+        case .system: NSApp.appearance = nil
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
     }
 
     private func startAutoScan() {

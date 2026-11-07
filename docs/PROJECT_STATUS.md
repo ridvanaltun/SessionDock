@@ -37,4 +37,4 @@ Last updated: 2026-11-07.
 - Developer ID signing and notarisation. The bundle is ad-hoc signed.
 
 ## Tests
-`swift test`: 70 tests, 0 failures. Five opt-in real-data tests are skipped by default. Real-data and rehearsal tests pass when enabled.
+`swift test`: 71 tests, 0 failures. Five opt-in real-data tests are skipped by default. Real-data and rehearsal tests pass when enabled.

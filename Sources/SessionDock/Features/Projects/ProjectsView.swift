@@ -53,17 +53,15 @@ struct ProjectsView: View {
                     message: "Projects appear after SessionDock has indexed at least one session."
                 )
             } else {
-                HSplitView {
+                MasterDetail {
                     List(selection: $model.selectedId) {
                         ForEach(model.projects) { project in
                             ProjectRow(project: project).tag(project.id)
                         }
                     }
                     .listStyle(.inset)
-                    .frame(minWidth: 300, idealWidth: 340, maxWidth: 420)
-
+                } detail: {
                     detail
-                        .frame(minWidth: 460, maxWidth: .infinity)
                 }
             }
         }
