@@ -35,7 +35,6 @@ Last updated: 2026-11-07.
 - Interrupted-write tests (kill mid-transaction).
 - Accessibility pass. VoiceOver labels are partial.
 - Developer ID signing and notarisation. The bundle is ad-hoc signed.
-- App icon: the chosen logo is in `design/logo/`. Convert it to `Resources/AppIcon.icns` to ship it in the bundle.
 
 ## Tests
-`swift test`: 64 tests, 0 failures. Five opt-in real-data tests are skipped by default. Real-data and rehearsal tests pass when enabled.
+`swift test`: 70 tests, 0 failures. Five opt-in real-data tests are skipped by default. Real-data and rehearsal tests pass when enabled.

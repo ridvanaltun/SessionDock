@@ -43,5 +43,6 @@ To notarize later, add a Developer ID Application certificate and pass its ident
 an app-specific password as repository secrets, and a step that submits the zip with `notarytool`.
 
 ## App icon
-Once a logo is approved, place it at `Resources/AppIcon.icns`. `scripts/make-app-bundle.sh` copies it into the bundle
-and sets `CFBundleIconFile` when the file exists.
+The logo source is `design/logo/sessiondock-icon.png` (1024×1024, with its SVG beside it). `scripts/make-icon.sh`
+turns it into `Resources/AppIcon.icns`; run it after changing the logo and commit the result.
+`scripts/make-app-bundle.sh` copies the icon into the bundle and sets `CFBundleIconFile`.

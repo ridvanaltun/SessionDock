@@ -5,6 +5,9 @@ Release notes are generated from this file. Add changes under **Unreleased**;
 
 ## Unreleased
 
+### New
+- SessionDock has its own app icon.
+
 ## 0.1.0 — 2026-11-07
 
 ### New
