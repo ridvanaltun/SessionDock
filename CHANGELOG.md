@@ -5,6 +5,8 @@ Release notes are generated from this file. Add changes under **Unreleased**;
 
 ## Unreleased
 
+## 0.1.0 — 2026-11-07
+
 ### New
 - Browse Claude Code and OpenCode sessions on one screen, grouped by project, with subagents nested under their parent.
 - Search titles, paths and conversation text.
